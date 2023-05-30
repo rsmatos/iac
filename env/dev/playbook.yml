@@ -1,0 +1,38 @@
+- hosts: terraform-ansible
+  tasks: 
+  - name: installing python3, virtualenv
+    apt:
+      pkg: 
+      - python3
+      - virtualenv
+      update_cache: yes
+    become: yes
+  - name: git clone
+    ansible.builtin.git: 
+      repo: https://github.com/guilhermeonrails/clientes-leo-api.git
+      dest: /home/ubuntu/tcc
+      version: master
+      force: yes
+  - name: installing dependencies with pip (Django and Django Rest)
+    pip: 
+      virtualenv: /home/ubuntu/tcc/venv
+      requirements: /home/ubuntu/tcc/requirements.txt
+  - name: verifying if project already exists
+    stat:
+      path: /home/ubuntu/tcc/setup/settings.py
+    register: projeto
+  # - name: initializing project
+  #   shell: '. /home/ubuntu/tcc/venv/bin/activate; django-admin startproject setup /home/ubuntu/tcc/'
+  #   when: not projeto.stat.exists
+  - name: Alter settings hosts
+    lineinfile:
+      path: /home/ubuntu/tcc/setup/settings.py
+      regexp: 'ALLOWED_HOSTS'
+      line: 'ALLOWED_HOSTS = ["*"]'
+      backrefs: yes
+  - name: setting up database
+    shell: '. /home/ubuntu/tcc/venv/bin/activate; python /home/ubuntu/tcc/manage.py migrate'
+  - name: loading initial data
+    shell: '. /home/ubuntu/tcc/venv/bin/activate; python /home/ubuntu/tcc/manage.py loaddata clientes.json'
+  - name: start server
+    shell: '. /home/ubuntu/tcc/venv/bin/activate; nohup python /home/ubuntu/tcc/manage.py runserver 0.0.0.0:8000 &'

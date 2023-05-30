@@ -41,3 +41,4 @@ terraform.rc
 
 *.pem
 .terraform.lock.hcl
+env/dev/iac-dev*

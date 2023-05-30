@@ -10,22 +10,25 @@ terraform {
 }
 
 provider "aws"{
-    region = "us-east-1"
+    region = var.aws_region
     profile = "default"
 }
 
 resource "aws_instance" "app_server" {
     ami = "ami-0aa2b7722dc1b5612"
-    instance_type = "t2.micro"
-    key_name = "iac-rsmatos"
-    # user_data = <<-EOF
-    #                #!/bin/bash
-    #                cd /home/ubuntu
-    #                echo "<h1>Feito pelo terraform</h1>" > index.html
-    #                nohup busybox httpd -f -p 8080 &
-    #                EOF
+    instance_type = var.instance
+    key_name = var.key 
+    security_groups = [aws_security_group.general_access.name]
     tags = {
         Name = "Terraform Ansible Python"
     }
 }
 
+resource "aws_key_pair" "sshkey"{
+    key_name = var.key
+    public_key = file("${var.key}.pub")
+}
+
+output "public_IP" {
+    value = aws_instance.app_server.public_ip 
+}
